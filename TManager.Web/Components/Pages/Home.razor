@@ -1,0 +1,60 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Home - TournamentApp</PageTitle>
+
+<div class="hero min-h-[60vh] bg-base-200 rounded-lg">
+    <div class="hero-content text-center">
+        <div class="max-w-md">
+            <h1 class="text-5xl font-bold">Welcome to TournamentApp! 🏆</h1>
+            <p class="py-6 text-lg">
+                Organize and manage tournaments with ease. Create, join, and compete in tournaments.
+            </p>
+            <div class="flex gap-4 justify-center">
+                <a href="/tournaments" class="btn btn-primary btn-lg">
+                    Browse Tournaments
+                </a>
+                <a href="/login" class="btn btn-outline btn-lg">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+            <div class="text-5xl mb-4">📋</div>
+            <h2 class="card-title">Create Tournaments</h2>
+            <p>Easily create and manage your own tournaments with custom rules and formats.</p>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+            <div class="text-5xl mb-4">👥</div>
+            <h2 class="card-title">Join & Compete</h2>
+            <p>Find tournaments to join and compete with players from around the world.</p>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+            <div class="text-5xl mb-4">🎯</div>
+            <h2 class="card-title">Track Progress</h2>
+            <p>Monitor your tournaments, standings, and match results in real-time.</p>
+        </div>
+    </div>
+</div>
+
+<div class="divider my-12"></div>
+
+<div class="alert alert-info shadow-lg">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>
+        <strong>Step 1 Complete!</strong> Tailwind CSS + daisyUI is working. Navigation collapses on mobile. Next: Supabase setup.
+    </span>
+</div>
