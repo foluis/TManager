@@ -13,6 +13,9 @@
 # Ignore Node.js packages
 node_modules/
 
+# Ignore appsettings with secrets for the TManager.Web project
+TManager.Web/appsettings.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
