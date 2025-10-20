@@ -1,0 +1,154 @@
+﻿@page "/test-connection"
+@rendermode InteractiveServer
+@inject TManager.Web.Infrastructure.Supabase.SupabaseClientWrapper SupabaseClient
+
+<PageTitle>Test Supabase Connection</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-4xl font-bold mb-6">🔌 Supabase Connection Test</h1>
+
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Connection Status</h2>
+
+            @if (isLoading)
+            {
+                <div class="flex items-center gap-4">
+                    <span class="loading loading-spinner loading-lg text-primary"></span>
+                    <span>Testing connection...</span>
+                </div>
+            }
+            else if (connectionResult.HasValue)
+            {
+                @if (connectionResult.Value)
+                {
+                    <div class="alert alert-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h3 class="font-bold">Connection Successful! ✅</h3>
+                            <div class="text-xs">@connectionInfo</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-semibold mb-2">What's Working:</h3>
+                        <ul class="list-disc list-inside space-y-1 text-sm">
+                            <li>Supabase client initialized</li>
+                            <li>Configuration is valid</li>
+                            <li>Network connection established</li>
+                            <li>Ready to use Auth, Database, and Storage</li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-error">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h3 class="font-bold">Connection Failed ❌</h3>
+                            <div class="text-xs">@errorMessage</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-semibold mb-2">Troubleshooting:</h3>
+                        <ul class="list-disc list-inside space-y-1 text-sm">
+                            <li>Check your Supabase URL in appsettings.json</li>
+                            <li>Verify your Supabase anon key is correct</li>
+                            <li>Ensure your Supabase project is running</li>
+                            <li>Check your internet connection</li>
+                        </ul>
+                    </div>
+                }
+            }
+
+            <div class="card-actions justify-end mt-4">
+                <button class="btn btn-primary" @onclick="TestSupabaseConnection" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="loading loading-spinner"></span>
+                    }
+                    Test Connection
+                </button>
+                <a href="/" class="btn btn-ghost">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6">
+        <div class="collapse collapse-arrow bg-base-200">
+            <input type="checkbox" />
+            <div class="collapse-title text-lg font-medium">
+                📝 How to Configure Supabase
+            </div>
+            <div class="collapse-content">
+                <ol class="list-decimal list-inside space-y-2 text-sm">
+                    <li>Go to <a href="https://supabase.com" target="_blank" class="link link-primary">supabase.com</a> and create a free account</li>
+                    <li>Create a new project</li>
+                    <li>Go to Settings → API</li>
+                    <li>Copy your "Project URL" and "anon/public" key</li>
+                    <li>
+                        Paste them in your <code class="bg-base-300 px-2 py-1 rounded">appsettings.json</code>:
+                        <pre class="bg-base-300 p-4 rounded-lg mt-2 text-xs overflow-x-auto">
+{
+  "Supabase": {
+    "Url": "https://xxxxx.supabase.co",
+    "Key": "your-anon-key-here"
+  }
+}</pre>
+                    </li>
+                    <li>Restart your application</li>
+                    <li>Click "Test Connection" button above</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isLoading = false;
+    private bool? connectionResult = null;
+    private string connectionInfo = string.Empty;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Auto-test connection on page load
+        await TestSupabaseConnection();
+    }
+
+    private async Task TestSupabaseConnection()
+    {
+        isLoading = true;
+        connectionResult = null;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var result = await SupabaseClient.TestConnectionAsync();
+            connectionResult = result;
+
+            if (result)
+            {
+                connectionInfo = SupabaseClient.GetConnectionInfo();
+            }
+            else
+            {
+                errorMessage = "Unable to establish connection to Supabase.";
+            }
+        }
+        catch (Exception ex)
+        {
+            connectionResult = false;
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -1,5 +1,6 @@
-using TManager.Web.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using TManager.Web.Components;
+using TManager.Web.Infrastructure.Supabase;
 //using TManager.Components;
 
 namespace TManager.Web
@@ -15,6 +16,9 @@ namespace TManager.Web
                 .AddInteractiveServerComponents();
 
             builder.Services.AddCascadingAuthenticationState();
+
+            // Add Supabase
+            builder.Services.AddSupabase(builder.Configuration);
 
             var app = builder.Build();
 

@@ -10,6 +10,10 @@
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
 		<Exec Command="npm run build:css" />
 		<Exec Command="npm run watch:css" />
-	</Target>
+	</Target>	
+
+	<ItemGroup>
+	  <PackageReference Include="Supabase" Version="1.1.1" />
+	</ItemGroup>
 
 </Project>
