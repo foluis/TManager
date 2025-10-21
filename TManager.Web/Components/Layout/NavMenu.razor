@@ -11,7 +11,15 @@
 		<ul class="menu menu-horizontal px-1">
 			<li><a href="/" class="btn btn-ghost">Home</a></li>
 			<li><a href="/tournaments" class="btn btn-ghost">Tournaments</a></li>
-			<li><a href="/test-connection" class="btn btn-ghost text-info">🔌 Test DB</a></li>
+			<li>
+				<details>
+					<summary class="btn btn-ghost text-info">🔧 Dev Tools</summary>
+					<ul class="p-2 bg-base-100 rounded-box z-50">
+						<li><a href="/test-connection">Connection Test</a></li>
+						<li><a href="/test-database">Database Test</a></li>
+					</ul>
+				</details>
+			</li>
 		</ul>
 	</div>
 
@@ -32,9 +40,19 @@
 			<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
 				<li><a href="/">Home</a></li>
 				<li><a href="/tournaments">Tournaments</a></li>
-				<li><a href="/test-connection" class="text-info">🔌 Test DB</a></li>
+				<li class="menu-title">
+					<span class="text-info">🔧 Dev Tools</span>
+				</li>
+				<li><a href="/test-connection">Connection Test</a></li>
+				<li><a href="/test-database">Database Test</a></li>
 				<li class="border-t mt-2 pt-2"><a href="/login" class="text-primary font-semibold">Login</a></li>
 			</ul>
+			@* <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+				<li><a href="/">Home</a></li>
+				<li><a href="/tournaments">Tournaments</a></li>
+				<li><a href="/test-connection" class="text-info">🔌 Test DB</a></li>
+				<li class="border-t mt-2 pt-2"><a href="/login" class="text-primary font-semibold">Login</a></li>
+			</ul>		 *@	
 		</div>
 	</div>
 </div>

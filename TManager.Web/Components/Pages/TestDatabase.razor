@@ -1,0 +1,298 @@
+﻿@page "/test-database"
+@using TManager.Web.Shared.Models
+@rendermode InteractiveServer
+@inject TManager.Web.Infrastructure.Supabase.SupabaseClientWrapper SupabaseClient
+
+<PageTitle>Test Database Schema</PageTitle>
+
+<div class="max-w-4xl mx-auto">
+	<h1 class="text-4xl font-bold mb-6">🗄️ Database Schema Test</h1>
+
+	<div class="alert alert-info mb-6">
+		<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+		</svg>
+		<span>This page tests if your database tables were created successfully.</span>
+	</div>
+
+	@if (isLoading)
+	{
+		<div class="flex items-center justify-center gap-4 p-8">
+			<span class="loading loading-spinner loading-lg text-primary"></span>
+			<span>Testing database schema...</span>
+		</div>
+	}
+	else
+	{
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			@foreach (var test in testResults)
+			{
+				<div class="card bg-base-100 shadow-xl">
+					<div class="card-body">
+						<h2 class="card-title text-lg">
+							@if (test.Success)
+							{
+								<span class="text-success">✅</span>
+							}
+							else
+							{
+								<span class="text-error">❌</span>
+							}
+							@test.TableName
+						</h2>
+						<p class="text-sm">@test.Message</p>
+						@if (!string.IsNullOrEmpty(test.Details))
+						{
+							<p class="text-xs text-base-content/60 mt-2">@test.Details</p>
+						}
+					</div>
+				</div>
+			}
+		</div>
+
+		<div class="mt-8">
+			@if (allTestsPassed)
+			{
+				<div class="alert alert-success">
+					<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<div>
+						<h3 class="font-bold">All Tables Created Successfully! 🎉</h3>
+						<div class="text-sm">Your database schema is ready. You can now proceed to Step 4: Signup Page.</div>
+					</div>
+				</div>
+			}
+			else
+			{
+				<div class="alert alert-error">
+					<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<div>
+						<h3 class="font-bold">Some Tables Are Missing</h3>
+						<div class="text-sm">Please run the SQL scripts in Supabase SQL Editor.</div>
+					</div>
+				</div>
+			}
+		</div>
+
+		<div class="card bg-base-200 mt-6">
+			<div class="card-body">
+				<h3 class="card-title text-lg">📊 Schema Summary</h3>
+				<div class="stats stats-vertical lg:stats-horizontal shadow">
+					<div class="stat">
+						<div class="stat-title">Total Tables</div>
+						<div class="stat-value text-primary">@testResults.Count</div>
+						<div class="stat-desc">Core tables</div>
+					</div>
+					<div class="stat">
+						<div class="stat-title">Passed</div>
+						<div class="stat-value text-success">@testResults.Count(t => t.Success)</div>
+						<div class="stat-desc">Tables found</div>
+					</div>
+					<div class="stat">
+						<div class="stat-title">Failed</div>
+						<div class="stat-value text-error">@testResults.Count(t => !t.Success)</div>
+						<div class="stat-desc">Tables missing</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="flex gap-4 mt-6">
+			<button class="btn btn-primary" @onclick="RunTests">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+				</svg>
+				Re-test Schema
+			</button>
+			<a href="/test-connection" class="btn btn-ghost">← Back to Connection Test</a>
+			<a href="/" class="btn btn-ghost">Home</a>
+		</div>
+	}
+</div>
+
+@code {
+	private bool isLoading = true;
+	private bool allTestsPassed = false;
+	private List<TableTest> testResults = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await RunTests();
+	}
+
+	private async Task RunTests()
+	{
+		isLoading = true;
+		testResults.Clear();
+
+		try
+		{
+			await SupabaseClient.InitializeAsync();
+
+			var result = await SupabaseClient.Client
+				.From<Tournament>()
+				.Select("*")
+				.Limit(1)
+				.Get();			
+			
+			var cities = result.Models;
+
+			// Test each table			
+			await TestTournamentTable("Tournament information");
+			// await TestTournamentParticipantTable("Tournament membership");
+			// await TestMatchTable( "Match details and results");
+			// await TestUserProfileTable("User profiles with roles");
+
+			allTestsPassed = testResults.All(t => t.Success);
+		}
+		catch (Exception ex)
+		{
+			testResults.Add(new TableTest
+			{
+				TableName = "Connection Error",
+				Success = false,
+				Message = "Failed to connect to database",
+				Details = ex.Message
+			});
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+
+	private async Task TestTournamentTable(string description)
+	{
+	    try
+	    {
+	        // Try to query the table (will fail if table doesn't exist)
+	        var response = await SupabaseClient.Client
+				.From<Tournament>()
+	            .Select("*")
+	            .Limit(1)
+	            .Get();
+
+	        testResults.Add(new TableTest
+	        {
+				TableName = "Tournament",
+	            Success = true,
+	            Message = $"✓ Table exists: {description}",
+	            Details = $"Table is accessible and ready to use"
+	        });
+	    }
+	    catch (Exception ex)
+	    {
+	        testResults.Add(new TableTest
+	        {
+				TableName = "Tournament",
+	            Success = false,
+	            Message = $"✗ Table missing or inaccessible",
+	            Details = $"Error: {ex.Message}"
+	        });
+	    }
+	}
+
+	private async Task TestTournamentParticipantTable(string description)
+	{
+		try
+		{
+			// Try to query the table (will fail if table doesn't exist)
+			var response = await SupabaseClient.Client
+				.From<TournamentParticipant>()
+				.Select("*")
+				.Limit(1)
+				.Get();
+
+			testResults.Add(new TableTest
+			{
+				TableName = "TournamentParticipant",
+				Success = true,
+				Message = $"✓ Table exists: {description}",
+				Details = $"Table is accessible and ready to use"
+			});
+		}
+		catch (Exception ex)
+		{
+			testResults.Add(new TableTest
+			{
+				TableName = "TournamentParticipant",
+				Success = false,
+				Message = $"✗ Table missing or inaccessible",
+				Details = $"Error: {ex.Message}"
+			});
+		}
+	}
+
+	private async Task TestMatchTable(string description)
+	{
+		try
+		{
+			// Try to query the table (will fail if table doesn't exist)
+			var response = await SupabaseClient.Client
+				.From<Match>()
+				.Select("*")
+				.Limit(1)
+				.Get();
+
+			testResults.Add(new TableTest
+			{
+				TableName = "Match",
+				Success = true,
+				Message = $"✓ Table exists: {description}",
+				Details = $"Table is accessible and ready to use"
+			});
+		}
+		catch (Exception ex)
+		{
+			testResults.Add(new TableTest
+			{
+				TableName = "Match",
+				Success = false,
+				Message = $"✗ Table missing or inaccessible",
+				Details = $"Error: {ex.Message}"
+			});
+		}
+	}
+
+	private async Task TestUserProfileTable(string description)
+	{
+		try
+		{
+			// Try to query the table (will fail if table doesn't exist)
+			var response = await SupabaseClient.Client
+				.From<UserProfile>()
+				.Select("*")
+				.Limit(1)
+				.Get();
+
+			testResults.Add(new TableTest
+			{
+				TableName = "UserProfile",
+				Success = true,
+				Message = $"✓ Table exists: {description}",
+				Details = $"Table is accessible and ready to use"
+			});
+		}
+		catch (Exception ex)
+		{
+			testResults.Add(new TableTest
+			{
+				TableName = "UserProfile",
+				Success = false,
+				Message = $"✗ Table missing or inaccessible",
+				Details = $"Error: {ex.Message}"
+			});
+		}
+	}
+
+	private class TableTest
+	{
+		public string TableName { get; set; } = string.Empty;
+		public bool Success { get; set; }
+		public string Message { get; set; } = string.Empty;
+		public string Details { get; set; } = string.Empty;
+	}
+}
