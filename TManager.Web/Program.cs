@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using TManager.Web.Components;
 using TManager.Web.Infrastructure.Supabase;
-//using TManager.Components;
+using TManager.Web.Features.Auth.Services;
 
 namespace TManager.Web
 {
@@ -19,6 +19,9 @@ namespace TManager.Web
 
             // Add Supabase
             builder.Services.AddSupabase(builder.Configuration);
+
+            // Add Authentication Services
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             var app = builder.Build();
 
