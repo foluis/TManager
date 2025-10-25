@@ -15,7 +15,14 @@ namespace TManager.Web
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            // Add Authentication State
             builder.Services.AddCascadingAuthenticationState();
+
+            // Register the concrete provider so it can be injected by its concrete type
+            builder.Services.AddScoped<CustomAuthStateProvider>();
+
+            // Map the AuthenticationStateProvider abstraction to the same instance
+            builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthStateProvider>());
 
             // Add Supabase
             builder.Services.AddSupabase(builder.Configuration);

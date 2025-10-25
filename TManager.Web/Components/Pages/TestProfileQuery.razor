@@ -1,0 +1,287 @@
+﻿@page "/test-profile-query"
+@rendermode InteractiveServer
+@inject TManager.Web.Infrastructure.Supabase.SupabaseClientWrapper SupabaseClient
+
+<PageTitle>Test Profile Query</PageTitle>
+
+<div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">🔍 Profile Query Diagnostic</h1>
+
+    <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+            <h2 class="card-title">Test Query</h2>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Enter User ID (from auth.users or users_profile)</span>
+                </label>
+                <input type="text" 
+                       @bind="userId" 
+                       class="input input-bordered w-full" 
+                       placeholder="Enter UUID" />
+            </div>
+
+            <button class="btn btn-primary mt-4" @onclick="TestQuery" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="loading loading-spinner"></span>
+                }
+                Test Query
+            </button>
+        </div>
+    </div>
+
+    @if (testResults.Any())
+    {
+        <div class="space-y-4">
+            @foreach (var result in testResults)
+            {
+                <div class="alert @(result.Success ? "alert-success" : "alert-error")">
+                    <div class="flex-1">
+                        <h3 class="font-bold">@result.Method</h3>
+                        <p class="text-sm">@result.Message</p>
+                        @if (!string.IsNullOrEmpty(result.Details))
+                        {
+                            <pre class="text-xs mt-2 overflow-x-auto">@result.Details</pre>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (profile != null)
+    {
+        <div class="card bg-base-100 shadow-xl mt-6">
+            <div class="card-body">
+                <h2 class="card-title text-success">✅ Profile Found!</h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <tbody>
+                            <tr>
+                                <td class="font-bold">ID</td>
+                                <td>@profile.Id</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">Email</td>
+                                <td>@profile.Email</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">Username</td>
+                                <td>@profile.Username</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">Full Name</td>
+                                <td>@profile.FullName</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">Global Role</td>
+                                <td>
+                                    <span class="badge badge-info">@profile.GlobalRole</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">Created At</td>
+                                <td>@profile.CreatedAt</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card bg-base-200 mt-6">
+        <div class="card-body">
+            <h3 class="card-title">How to Use:</h3>
+            <ol class="list-decimal list-inside space-y-2">
+                <li>Go to Supabase → Authentication → Users</li>
+                <li>Copy a user's ID (UUID format)</li>
+                <li>Paste it above and click "Test Query"</li>
+                <li>This will test different query methods to see which works</li>
+            </ol>
+
+            <div class="divider">OR</div>
+
+            <h3 class="font-bold">Get User ID from SQL:</h3>
+            <pre class="bg-base-300 p-4 rounded text-sm overflow-x-auto">
+SELECT id, email FROM auth.users LIMIT 5;
+-- Copy any ID from the results</pre>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string userId = string.Empty;
+    private bool isLoading = false;
+    private List<QueryResult> testResults = new();
+    private TManager.Web.Shared.Models.UserProfile? profile;
+
+    private async Task TestQuery()
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            testResults.Add(new QueryResult
+            {
+                Method = "Validation",
+                Success = false,
+                Message = "Please enter a User ID"
+            });
+            return;
+        }
+
+        isLoading = true;
+        testResults.Clear();
+        profile = null;
+
+        try
+        {
+            await SupabaseClient.InitializeAsync();
+
+            // Test 1: Simple Get with Filter
+            try
+            {
+                var response1 = await SupabaseClient.Client
+                    .From<TManager.Web.Shared.Models.UserProfile>()
+                    .Select("*")
+                    .Filter("id", Supabase.Postgrest.Constants.Operator.Equals, userId)
+                    .Get();
+
+                if (response1?.Models != null && response1.Models.Count > 0)
+                {
+                    profile = response1.Models[0];
+                    testResults.Add(new QueryResult
+                    {
+                        Method = "Method 1: Filter with Get()",
+                        Success = true,
+                        Message = "✅ Successfully fetched profile!",
+                        Details = $"Found user: {profile.Email}"
+                    });
+                }
+                else
+                {
+                    testResults.Add(new QueryResult
+                    {
+                        Method = "Method 1: Filter with Get()",
+                        Success = false,
+                        Message = "❌ No results returned (RLS may be blocking)"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                testResults.Add(new QueryResult
+                {
+                    Method = "Method 1: Filter with Get()",
+                    Success = false,
+                    Message = "❌ Query failed",
+                    Details = ex.Message
+                });
+            }
+
+            // Test 2: Where clause
+            try
+            {
+                var response2 = await SupabaseClient.Client
+                    .From<TManager.Web.Shared.Models.UserProfile>()
+                    .Where(x => x.Id == userId)
+                    .Get();
+
+                if (response2?.Models != null && response2.Models.Count > 0)
+                {
+                    if (profile == null) profile = response2.Models[0];
+                    testResults.Add(new QueryResult
+                    {
+                        Method = "Method 2: Where clause with Get()",
+                        Success = true,
+                        Message = "✅ Successfully fetched profile!",
+                        Details = $"Found user: {response2.Models[0].Email}"
+                    });
+                }
+                else
+                {
+                    testResults.Add(new QueryResult
+                    {
+                        Method = "Method 2: Where clause with Get()",
+                        Success = false,
+                        Message = "❌ No results returned"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                testResults.Add(new QueryResult
+                {
+                    Method = "Method 2: Where clause with Get()",
+                    Success = false,
+                    Message = "❌ Query failed",
+                    Details = ex.Message
+                });
+            }
+
+            // Test 3: Single()
+            try
+            {
+                var response3 = await SupabaseClient.Client
+                    .From<TManager.Web.Shared.Models.UserProfile>()
+                    .Where(x => x.Id == userId)
+                    .Single();
+
+                if (response3 != null)
+                {
+                    if (profile == null) profile = response3;
+                    testResults.Add(new QueryResult
+                    {
+                        Method = "Method 3: Single()",
+                        Success = true,
+                        Message = "✅ Successfully fetched profile!",
+                        Details = $"Found user: {response3.Email}"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                testResults.Add(new QueryResult
+                {
+                    Method = "Method 3: Single()",
+                    Success = false,
+                    Message = "❌ Query failed",
+                    Details = ex.Message
+                });
+            }
+
+            if (profile == null)
+            {
+                testResults.Add(new QueryResult
+                {
+                    Method = "Overall Result",
+                    Success = false,
+                    Message = "❌ All query methods failed - likely an RLS policy issue",
+                    Details = "Run the fix_rls_policies.sql script in Supabase SQL Editor"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            testResults.Add(new QueryResult
+            {
+                Method = "Connection",
+                Success = false,
+                Message = "Failed to connect to Supabase",
+                Details = ex.Message
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class QueryResult
+    {
+        public string Method { get; set; } = string.Empty;
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? Details { get; set; }
+    }
+}

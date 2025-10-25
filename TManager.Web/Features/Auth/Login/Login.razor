@@ -1,4 +1,4 @@
-﻿@page "/signup"
+﻿@page "/login"
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Forms
@@ -9,7 +9,7 @@
 @inject TManager.Web.Features.Auth.Services.CustomAuthStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
-<PageTitle>Sign Up - TournamentApp</PageTitle>
+<PageTitle>Login - TournamentApp</PageTitle>
 
 <!-- Page Layout -->
 <div class="min-h-screen flex items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8">
@@ -20,12 +20,12 @@
 
                 <!-- Header -->
                 <div class="text-center mb-6">
-                    <h1 class="text-3xl font-bold">Create Account 🏆</h1>
-                    <p class="text-base-content/70 mt-2">Join TournamentApp and start competing!</p>
+                    <h1 class="text-3xl font-bold">Welcome Back! 👋</h1>
+                    <p class="text-base-content/70 mt-2">Sign in to your account</p>
                 </div>
 
-                <!-- Signup Form -->
-                <EditForm Model="@command" OnValidSubmit="HandleSignup" FormName="signupForm">
+                <!-- Login Form -->
+                <EditForm Model="@command" OnValidSubmit="HandleLogin" FormName="loginForm">
                     <DataAnnotationsValidator />
 
                     <!-- Error Message -->
@@ -35,11 +35,9 @@
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  class="stroke-current shrink-0 h-6 w-6"
                                  fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      stroke-width="2"
-                                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 
-                                         9 9 0 0118 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2
+                                             m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>@errorMessage</span>
                         </div>
@@ -52,11 +50,9 @@
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  class="stroke-current shrink-0 h-6 w-6"
                                  fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      stroke-width="2"
-                                      d="M9 12l2 2 4-4m6 2a9 9 0 
-                                         11-18 0 9 9 0 0118 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 12l2 2 4-4m6 2a9 9 0
+                                             11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>@successMessage</span>
                         </div>
@@ -68,12 +64,11 @@
                             <span class="label-text font-semibold">Email Address</span>
                         </label>
 
-                        <InputText 
-                            @bind-Value="command.Email"
-                            class="input input-bordered w-full"
-                            placeholder="you@example.com"
-                            type="email"
-                            autocomplete="email" />
+                        <InputText @bind-Value="command.Email"
+                                   class="input input-bordered w-full"
+                                   placeholder="you@example.com"
+                                   type="email"
+                                   autocomplete="email" />
 
                         <ValidationMessage For="@(() => command.Email)" class="label-text-alt text-error mt-1" />
                     </div>
@@ -84,47 +79,21 @@
                             <span class="label-text font-semibold">Password</span>
                         </label>
 
-                        <InputText 
-                            @bind-Value="command.Password"
-                            class="input input-bordered w-full"
-                            placeholder="••••••••"
-                            type="password"
-                            autocomplete="new-password" />
+                        <InputText @bind-Value="command.Password"
+                                   class="input input-bordered w-full"
+                                   placeholder="••••••••"
+                                   type="password"
+                                   autocomplete="current-password" />
 
-                        <label class="label">
-                            <span class="label-text-alt">Minimum 6 characters</span>
-                        </label>
-
-                        <ValidationMessage For="@(() => command.Password)" class="label-text-alt text-error" />
+                        <ValidationMessage For="@(() => command.Password)" class="label-text-alt text-error mt-1" />
                     </div>
 
-                    <!-- Confirm Password Field -->
-                    <div class="form-control mb-4">
-                        <label class="label">
-                            <span class="label-text font-semibold">Confirm Password</span>
-                        </label>
-
-                        <InputText 
-                            @bind-Value="command.ConfirmPassword"
-                            class="input input-bordered w-full"
-                            placeholder="••••••••"
-                            type="password"
-                            autocomplete="new-password" />
-
-                        <ValidationMessage For="@(() => command.ConfirmPassword)" class="label-text-alt text-error mt-1" />
-                    </div>
-
-                    <!-- Terms Checkbox -->
+                    <!-- Remember Me -->
                     <div class="form-control mb-6">
                         <label class="label cursor-pointer justify-start gap-3">
-                            <InputCheckbox @bind-Value="command.AcceptTerms" class="checkbox checkbox-primary" />
-                            <span class="label-text">
-                                I accept the 
-                                <a href="/terms" class="link link-primary">terms and conditions</a>
-                            </span>
+                            <InputCheckbox @bind-Value="command.RememberMe" class="checkbox checkbox-primary" />
+                            <span class="label-text">Remember me</span>
                         </label>
-
-                        <ValidationMessage For="@(() => command.AcceptTerms)" class="label-text-alt text-error" />
                     </div>
 
                     <!-- Submit Button -->
@@ -133,11 +102,11 @@
                             @if (isSubmitting)
                             {
                                 <span class="loading loading-spinner"></span>
-                                <span>Creating Account...</span>
+                                <span>Signing In...</span>
                             }
                             else
                             {
-                                <span>Create Account</span>
+                                <span>Sign In</span>
                             }
                         </button>
                     </div>
@@ -146,35 +115,36 @@
                 <!-- Divider -->
                 <div class="divider">OR</div>
 
-                <!-- Login Redirect -->
+                <!-- Sign Up Link -->
                 <div class="text-center">
                     <p class="text-sm text-base-content/70">
-                        Already have an account?
-                        <a href="/login" class="link link-primary font-semibold">Sign In</a>
+                        Don't have an account?
+                        <a href="/signup" class="link link-primary font-semibold">Sign Up</a>
                     </p>
                 </div>
             </div>
         </div>
 
-        <!-- Footer Note -->
+        <!-- Forgot Password Link -->
         <div class="text-center mt-6 text-sm text-base-content/60">
-            <p>By signing up, you agree to our Terms of Service and Privacy Policy.</p>
+            <a href="/forgot-password" class="link link-hover">Forgot your password?</a>
         </div>
     </div>
 </div>
 
 @code {
     [SupplyParameterFromForm]
-    private SignupCommand command { get; set; } = new();
+    private LoginCommand command { get; set; } = new();
 
     private bool isSubmitting;
     private string? errorMessage;
     private string? successMessage;
 
     /// <summary>
-    /// Handles the signup process: validates form, creates user, and redirects on success.
+    /// Handles user login flow.
+    /// Displays feedback and redirects upon success.
     /// </summary>
-    private async Task HandleSignup()
+    private async Task HandleLogin()
     {
         isSubmitting = true;
         errorMessage = null;
@@ -182,24 +152,24 @@
 
         try
         {
-            var result = await AuthService.SignUpAsync(command.Email, command.Password);
+            var result = await AuthService.SignInAsync(command.Email, command.Password);
 
             if (result.Success && result.User != null)
             {
                 // Mark user as authenticated
                 AuthStateProvider.MarkUserAsAuthenticated(result.User);
 
-                successMessage = "Account created successfully! Redirecting...";
+                successMessage = "Login successful! Redirecting...";
 
-                // Wait a moment to display success message
-                await Task.Delay(1500);
+                // Wait a moment to show success message
+                await Task.Delay(1000);
 
-                // Redirect to home page
+                // Redirect to home page with force reload to update auth state
                 Navigation.NavigateTo("/", forceLoad: true);
             }
             else
             {
-                errorMessage = result.ErrorMessage ?? "Failed to create account. Please try again.";
+                errorMessage = result.ErrorMessage ?? "Invalid email or password.";
             }
         }
         catch (Exception ex)

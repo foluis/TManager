@@ -1,4 +1,12 @@
-﻿@* Navigation Menu - Collapsible on mobile, top-right positioning *@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using TManager.Web.Features.Auth.Services
+
+@inject NavigationManager Navigation
+@inject TManager.Web.Features.Auth.Services.CustomAuthStateProvider AuthStateProvider
+@inject TManager.Web.Features.Auth.Services.IAuthService AuthService
+
+@* Navigation Menu - Collapsible on mobile, top-right positioning *@
 
 <div class="navbar bg-base-100 shadow-lg">
     <div class="navbar-start">
@@ -17,6 +25,7 @@
                     <ul class="p-2 bg-base-100 rounded-box z-50">
                         <li><a href="/test-connection">Connection Test</a></li>
                         <li><a href="/test-database">Database Test</a></li>
+                        <li><a href="/test-profile-query">Profile Query Test</a></li>
                     </ul>
                 </details>
             </li>
@@ -51,7 +60,7 @@
                 </li>
                 <li><a href="/login" class="text-primary font-semibold">Login</a></li>
             </ul>
-           @*  [1] p-2 shadow bg-base-100 rounded-box w-52">
+            @* [1] p-2 shadow bg-base-100 rounded-box w-52">
                 <li><a href="/">Home</a></li>
                 <li><a href="/tournaments">Tournaments</a></li>
                 <li><a href="/test-connection" class="text-info">🔌 Test DB</a></li>
@@ -62,5 +71,81 @@
 </div>
 
 @code {
-    // Auth state will be added in Step 5
+    private string? userName;
+    private string? userEmail;
+    private string? userRole;
+    private bool isOrganizer;
+    private bool isAdmin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserInfo();
+        
+        // Subscribe to auth state changes
+        ((CustomAuthStateProvider)AuthStateProvider).AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        await LoadUserInfo();
+        StateHasChanged();
+    }
+
+    private async Task LoadUserInfo()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userName = user.FindFirst(c => c.Type == "Username")?.Value ?? user.Identity.Name ?? "User";
+            userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+            userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
+            
+            isOrganizer = userRole == TManager.Web.Shared.Models.UserRole.Organizer;
+            isAdmin = userRole == TManager.Web.Shared.Models.UserRole.Admin;
+        }
+        else
+        {
+            userName = null;
+            userEmail = null;
+            userRole = null;
+            isOrganizer = false;
+            isAdmin = false;
+        }
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.SignOutAsync();
+        ((CustomAuthStateProvider)AuthStateProvider).MarkUserAsLoggedOut();
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private string GetInitials()
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+            return "?";
+
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        
+        return userName[0].ToString().ToUpper();
+    }
+
+    private string GetRoleBadgeColor() => userRole switch
+    {
+        TManager.Web.Shared.Models.UserRole.Admin => "badge-error",
+        TManager.Web.Shared.Models.UserRole.Organizer => "badge-warning",
+        _ => "badge-info"
+    };
+
+    private string GetRoleDisplayName() => 
+        TManager.Web.Shared.Models.UserRole.GetDisplayName(userRole ?? "");
+
+    public void Dispose()
+    {
+        ((CustomAuthStateProvider)AuthStateProvider).AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
 }
