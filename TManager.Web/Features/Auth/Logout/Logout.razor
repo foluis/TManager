@@ -1,0 +1,100 @@
+﻿@page "/logout"
+@rendermode InteractiveServer
+
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@inject TManager.Web.Features.Auth.Services.IAuthService AuthService
+@inject TManager.Web.Features.Auth.Services.CustomAuthStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+@using Microsoft.AspNetCore.Components.Web
+<PageTitle>Logging Out...</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="card bg-base-100 shadow-xl w-96">
+        <div class="card-body items-center text-center">
+            @if (isLoggingOut)
+            {
+                <span class="loading loading-spinner loading-lg text-primary"></span>
+                <h2 class="card-title mt-4">Logging Out...</h2>
+                <p class="text-base-content/70">Please wait</p>
+            }
+            else if (logoutSuccess)
+            {
+                <div class="text-success text-6xl mb-4">✓</div>
+                <h2 class="card-title">Logged Out Successfully!</h2>
+                <p class="text-base-content/70">Redirecting to home...</p>
+            }
+            else
+            {
+                <div class="text-error text-6xl mb-4">✗</div>
+                <h2 class="card-title">Logout Failed</h2>
+                <p class="text-base-content/70">@errorMessage</p>
+                <div class="card-actions mt-4">
+                    <a href="/" class="btn btn-primary">Go to Home</a>
+                </div>
+            }
+        </div>
+    </div>
+</div> 
+
+@code {
+    private bool initialized = false;
+    private bool isLoggingOut = true;
+    private bool logoutSuccess = false;
+    private string? errorMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !initialized)
+        {
+            initialized = true;
+            Console.WriteLine("[Logout] Starting logout after render...");
+            await PerformLogout();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Console.WriteLine("[Logout] ========== LOGOUT PAGE LOADED ==========");
+        // await PerformLogout();
+    }
+
+    private async Task PerformLogout()
+    {
+        try
+        {
+            Console.WriteLine("[Logout] Step 1: Calling AuthService.SignOutAsync()");
+            await AuthService.SignOutAsync();
+            Console.WriteLine("[Logout] Step 2: SignOut completed");
+
+            Console.WriteLine("[Logout] Step 3: Marking user as logged out in AuthStateProvider");
+            AuthStateProvider.MarkUserAsLoggedOut();
+            Console.WriteLine("[Logout] Step 4: User marked as logged out");
+
+            logoutSuccess = true;
+            isLoggingOut = false;
+            
+            Console.WriteLine("[Logout] Step 5: Logout successful, waiting before redirect");
+            StateHasChanged();
+
+            // Wait a moment to show success message
+            await Task.Delay(1500);
+
+            Console.WriteLine("[Logout] Step 6: Redirecting to home");
+            Navigation.NavigateTo("/", forceLoad: true);
+            
+            Console.WriteLine("[Logout] ========== LOGOUT COMPLETED ==========");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Logout] ========== LOGOUT ERROR ==========");
+            Console.WriteLine($"[Logout] Error: {ex.Message}");
+            Console.WriteLine($"[Logout] Stack: {ex.StackTrace}");
+            
+            isLoggingOut = false;
+            logoutSuccess = false;
+            errorMessage = "An error occurred during logout. Please try again.";
+            StateHasChanged();
+        }
+    }
+}

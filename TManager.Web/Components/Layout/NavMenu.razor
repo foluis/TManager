@@ -8,7 +8,6 @@
 
 @implements IDisposable
 
-
 <div class="navbar bg-base-100 shadow-lg">
     <div class="navbar-start">
         <a href="/" class="btn btn-ghost text-xl">
@@ -74,7 +73,7 @@
                         <li><a href="/profile">My Profile</a></li>
                         <li><a href="/settings">Settings</a></li>
                         <li class="border-t mt-2 pt-2">
-                            <a @onclick="HandleLogout" @onclick:preventDefault="true" class="text-error cursor-pointer">
+                            <a href="/logout" class="text-error">
                                 Logout
                             </a>
                         </li>
@@ -134,7 +133,7 @@
                 @if (isAuthenticated)
                 {
                     <li class="border-t mt-2 pt-2">
-                        <a @onclick="HandleLogout" @onclick:preventDefault="true" class="text-error font-semibold cursor-pointer">
+                        <a href="/logout" class="text-error font-semibold">
                             Logout
                         </a>
                     </li>
@@ -219,48 +218,10 @@
 
     private async Task HandleLogout()
     {
-        Console.WriteLine("[NavMenu] ========== LOGOUT STARTED ==========");
-
-        try
-        {
-            Console.WriteLine("[NavMenu] Step 1: Calling AuthService.SignOutAsync()");
-            await AuthService.SignOutAsync();
-            Console.WriteLine("[NavMenu] Step 2: SignOut completed");
-
-            if (AuthStateProvider is CustomAuthStateProvider customProvider)
-            {
-                Console.WriteLine("[NavMenu] Step 3: Marking user as logged out");
-                customProvider.MarkUserAsLoggedOut();
-                Console.WriteLine("[NavMenu] Step 4: User marked as logged out");
-            }
-            else
-            {
-                Console.WriteLine("[NavMenu] WARNING: AuthStateProvider is not CustomAuthStateProvider");
-            }
-
-            // Reset local state
-            Console.WriteLine("[NavMenu] Step 5: Resetting local state");
-            isAuthenticated = false;
-            userName = null;
-            userEmail = null;
-            userRole = null;
-            isOrganizer = false;
-            isAdmin = false;
-
-            Console.WriteLine("[NavMenu] Step 6: Calling StateHasChanged");
-            StateHasChanged();
-
-            Console.WriteLine("[NavMenu] Step 7: Navigating to home");
-            Navigation.NavigateTo("/", forceLoad: true);
-
-            Console.WriteLine("[NavMenu] ========== LOGOUT COMPLETED ==========");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[NavMenu] ========== LOGOUT ERROR ==========");
-            Console.WriteLine($"[NavMenu] Error: {ex.Message}");
-            Console.WriteLine($"[NavMenu] Stack: {ex.StackTrace}");
-        }
+        // This method is no longer used - logout is handled by /logout page
+        // Keeping it here just in case, but can be removed
+        Console.WriteLine("[NavMenu] HandleLogout called - redirecting to /logout page");
+        Navigation.NavigateTo("/logout");
     }
 
     private string GetInitials()
