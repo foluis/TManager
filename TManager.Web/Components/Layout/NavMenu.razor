@@ -3,10 +3,11 @@
 @using TManager.Web.Features.Auth.Services
 
 @inject NavigationManager Navigation
-@inject TManager.Web.Features.Auth.Services.CustomAuthStateProvider AuthStateProvider
-@inject TManager.Web.Features.Auth.Services.IAuthService AuthService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
 
-@* Navigation Menu - Collapsible on mobile, top-right positioning *@
+@implements IDisposable
+
 
 <div class="navbar bg-base-100 shadow-lg">
     <div class="navbar-start">
@@ -14,11 +15,26 @@
             <span class="text-primary">🏆</span> TournamentApp
         </a>
     </div>
-    
+
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
             <li><a href="/" class="btn btn-ghost">Home</a></li>
             <li><a href="/tournaments" class="btn btn-ghost">Tournaments</a></li>
+
+            @if (isAuthenticated)
+            {
+                @if (isOrganizer || isAdmin)
+                {
+                    <li><a href="/my-tournaments" class="btn btn-ghost">My Tournaments</a></li>
+                    <li><a href="/create-tournament" class="btn btn-ghost">Create Tournament</a></li>
+                }
+                @if (isAdmin)
+                {
+                    <li><a href="/users-management" class="btn btn-ghost">Users</a></li>
+                    <li><a href="/all-tournaments" class="btn btn-ghost">All Tournaments</a></li>
+                }
+            }
+
             <li>
                 <details>
                     <summary class="btn btn-ghost text-info">🔧 Dev Tools</summary>
@@ -26,20 +42,53 @@
                         <li><a href="/test-connection">Connection Test</a></li>
                         <li><a href="/test-database">Database Test</a></li>
                         <li><a href="/test-profile-query">Profile Query Test</a></li>
+                        <li><a href="/test-auth-state">Auth State Test</a></li>
                     </ul>
                 </details>
             </li>
         </ul>
     </div>
-    
+
     <div class="navbar-end">
-        @* Desktop menu - always visible on large screens *@
+        @* Desktop menu *@
         <div class="hidden lg:flex items-center gap-2">
-            @* For now, showing logged out state - we'll add auth state in Step 5 *@
-            <a href="/signup" class="btn btn-ghost">Sign Up</a>
-            <a href="/login" class="btn btn-primary">Login</a>
+            @if (isAuthenticated)
+            {
+                @* User is logged in - show profile dropdown *@
+                <div class="dropdown dropdown-end">
+                    <label tabindex="0" class="btn btn-ghost gap-2">
+                        <div class="avatar placeholder">
+                            <div class="bg-primary text-primary-content rounded-full w-8">
+                                <span class="text-xs">@GetInitials()</span>
+                            </div>
+                        </div>
+                        <span>@userName</span>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 mt-4">
+                        <li class="menu-title">
+                            <span>@userEmail</span>
+                        </li>
+                        <li class="menu-title">
+                            <span class="badge badge-sm @GetRoleBadgeColor()">@GetRoleDisplayName()</span>
+                        </li>
+                        <li><a href="/profile">My Profile</a></li>
+                        <li><a href="/settings">Settings</a></li>
+                        <li class="border-t mt-2 pt-2">
+                            <a @onclick="HandleLogout" @onclick:preventDefault="true" class="text-error cursor-pointer">
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            }
+            else
+            {
+                @* User is NOT logged in - show signup and login buttons *@
+                <a href="/signup" class="btn btn-ghost">Sign Up</a>
+                <a href="/login" class="btn btn-primary">Login</a>
+            }
         </div>
-        
+
         @* Mobile hamburger menu *@
         <div class="dropdown dropdown-end lg:hidden">
             <label tabindex="0" class="btn btn-ghost">
@@ -50,27 +99,60 @@
             <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
                 <li><a href="/">Home</a></li>
                 <li><a href="/tournaments">Tournaments</a></li>
+
+                @if (isAuthenticated)
+                {
+                    @if (isOrganizer || isAdmin)
+                    {
+                        <li><a href="/my-tournaments">My Tournaments</a></li>
+                        <li><a href="/create-tournament">Create Tournament</a></li>
+                    }
+                    @if (isAdmin)
+                    {
+                        <li><a href="/users-management">Users Management</a></li>
+                        <li><a href="/all-tournaments">All Tournaments</a></li>
+                    }
+
+                    <li class="menu-title mt-2">
+                        <span>Signed in as</span>
+                    </li>
+                    <li class="menu-title">
+                        <span class="font-semibold">@userName</span>
+                    </li>
+                    <li><a href="/profile">My Profile</a></li>
+                    <li><a href="/settings">Settings</a></li>
+                }
+
                 <li class="menu-title">
                     <span class="text-info">🔧 Dev Tools</span>
                 </li>
                 <li><a href="/test-connection">Connection Test</a></li>
                 <li><a href="/test-database">Database Test</a></li>
-                <li class="border-t mt-2 pt-2">
-                    <a href="/signup" class="text-secondary font-semibold">Sign Up</a>
-                </li>
-                <li><a href="/login" class="text-primary font-semibold">Login</a></li>
+                <li><a href="/test-profile-query">Profile Query Test</a></li>
+                <li><a href="/test-auth-state">Auth State Test</a></li>
+
+                @if (isAuthenticated)
+                {
+                    <li class="border-t mt-2 pt-2">
+                        <a @onclick="HandleLogout" @onclick:preventDefault="true" class="text-error font-semibold cursor-pointer">
+                            Logout
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="border-t mt-2 pt-2">
+                        <a href="/signup" class="text-secondary font-semibold">Sign Up</a>
+                    </li>
+                    <li><a href="/login" class="text-primary font-semibold">Login</a></li>
+                }
             </ul>
-            @* [1] p-2 shadow bg-base-100 rounded-box w-52">
-                <li><a href="/">Home</a></li>
-                <li><a href="/tournaments">Tournaments</a></li>
-                <li><a href="/test-connection" class="text-info">🔌 Test DB</a></li>
-                <li class="border-t mt-2 pt-2"><a href="/login" class="text-primary font-semibold">Login</a></li>
-            </ul> *@
         </div>
     </div>
 </div>
 
 @code {
+    private bool isAuthenticated = false;
     private string? userName;
     private string? userEmail;
     private string? userRole;
@@ -80,46 +162,105 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadUserInfo();
-        
+
         // Subscribe to auth state changes
-        ((CustomAuthStateProvider)AuthStateProvider).AuthenticationStateChanged += OnAuthenticationStateChanged;
+        if (AuthStateProvider is CustomAuthStateProvider customProvider)
+        {
+            customProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        }
     }
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
     {
         await LoadUserInfo();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadUserInfo()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
 
-        if (user.Identity?.IsAuthenticated == true)
-        {
-            userName = user.FindFirst(c => c.Type == "Username")?.Value ?? user.Identity.Name ?? "User";
-            userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
-            userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
-            
-            isOrganizer = userRole == TManager.Web.Shared.Models.UserRole.Organizer;
-            isAdmin = userRole == TManager.Web.Shared.Models.UserRole.Admin;
+            isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+
+            Console.WriteLine($"[NavMenu] IsAuthenticated: {isAuthenticated}");
+
+            if (isAuthenticated)
+            {
+                userName = user.FindFirst(c => c.Type == "Username")?.Value ?? user.Identity.Name ?? "User";
+                userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+                userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+                Console.WriteLine($"[NavMenu] User: {userName}, Email: {userEmail}, Role: {userRole}");
+
+                isOrganizer = userRole == TManager.Web.Shared.Models.UserRole.Organizer;
+                isAdmin = userRole == TManager.Web.Shared.Models.UserRole.Admin;
+            }
+            else
+            {
+                Console.WriteLine("[NavMenu] No authenticated user");
+                userName = null;
+                userEmail = null;
+                userRole = null;
+                isOrganizer = false;
+                isAdmin = false;
+            }
+
+            StateHasChanged();
         }
-        else
+        catch (Exception ex)
         {
-            userName = null;
-            userEmail = null;
-            userRole = null;
-            isOrganizer = false;
-            isAdmin = false;
+            Console.WriteLine($"[NavMenu] Error: {ex.Message}");
+            isAuthenticated = false;
         }
     }
 
     private async Task HandleLogout()
     {
-        await AuthService.SignOutAsync();
-        ((CustomAuthStateProvider)AuthStateProvider).MarkUserAsLoggedOut();
-        Navigation.NavigateTo("/", forceLoad: true);
+        Console.WriteLine("[NavMenu] ========== LOGOUT STARTED ==========");
+
+        try
+        {
+            Console.WriteLine("[NavMenu] Step 1: Calling AuthService.SignOutAsync()");
+            await AuthService.SignOutAsync();
+            Console.WriteLine("[NavMenu] Step 2: SignOut completed");
+
+            if (AuthStateProvider is CustomAuthStateProvider customProvider)
+            {
+                Console.WriteLine("[NavMenu] Step 3: Marking user as logged out");
+                customProvider.MarkUserAsLoggedOut();
+                Console.WriteLine("[NavMenu] Step 4: User marked as logged out");
+            }
+            else
+            {
+                Console.WriteLine("[NavMenu] WARNING: AuthStateProvider is not CustomAuthStateProvider");
+            }
+
+            // Reset local state
+            Console.WriteLine("[NavMenu] Step 5: Resetting local state");
+            isAuthenticated = false;
+            userName = null;
+            userEmail = null;
+            userRole = null;
+            isOrganizer = false;
+            isAdmin = false;
+
+            Console.WriteLine("[NavMenu] Step 6: Calling StateHasChanged");
+            StateHasChanged();
+
+            Console.WriteLine("[NavMenu] Step 7: Navigating to home");
+            Navigation.NavigateTo("/", forceLoad: true);
+
+            Console.WriteLine("[NavMenu] ========== LOGOUT COMPLETED ==========");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NavMenu] ========== LOGOUT ERROR ==========");
+            Console.WriteLine($"[NavMenu] Error: {ex.Message}");
+            Console.WriteLine($"[NavMenu] Stack: {ex.StackTrace}");
+        }
     }
 
     private string GetInitials()
@@ -130,7 +271,7 @@
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2)
             return $"{parts[0][0]}{parts[1][0]}".ToUpper();
-        
+
         return userName[0].ToString().ToUpper();
     }
 
@@ -141,11 +282,14 @@
         _ => "badge-info"
     };
 
-    private string GetRoleDisplayName() => 
+    private string GetRoleDisplayName() =>
         TManager.Web.Shared.Models.UserRole.GetDisplayName(userRole ?? "");
 
     public void Dispose()
     {
-        ((CustomAuthStateProvider)AuthStateProvider).AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        if (AuthStateProvider is CustomAuthStateProvider customProvider)
+        {
+            customProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        }
     }
 }

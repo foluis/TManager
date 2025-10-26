@@ -1,0 +1,195 @@
+﻿@page "/test-auth-state"
+
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+@inject TManager.Web.Features.Auth.Services.IAuthService AuthService
+
+<PageTitle>Test Auth State</PageTitle>
+
+<div class="max-w-4xl mx-auto p-6">
+	<h1 class="text-3xl font-bold mb-6">🔐 Authentication State Test</h1>
+
+	<button class="btn btn-primary mb-4" @onclick="RefreshState">
+		🔄 Refresh State
+	</button>
+
+	@if (isLoading)
+	{
+		<div class="flex items-center gap-4">
+			<span class="loading loading-spinner loading-lg"></span>
+			<span>Loading auth state...</span>
+		</div>
+	}
+	else
+	{
+		<div class="space-y-4">
+			<div class="card bg-base-100 shadow-xl">
+				<div class="card-body">
+					<h2 class="card-title">Authentication Status</h2>
+					<div class="overflow-x-auto">
+						<table class="table table-zebra">
+							<tbody>
+								<tr>
+									<td class="font-bold">Is Authenticated</td>
+									<td>
+										@if (isAuthenticated)
+										{
+											<span class="badge badge-success">✅ Yes</span>
+										}
+										else
+										{
+											<span class="badge badge-error">❌ No</span>
+										}
+									</td>
+								</tr>
+								<tr>
+									<td class="font-bold">Identity Name</td>
+									<td>@(identityName ?? "N/A")</td>
+								</tr>
+								<tr>
+									<td class="font-bold">Authentication Type</td>
+									<td>@(authenticationType ?? "N/A")</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			@if (claims.Any())
+			{
+				<div class="card bg-base-100 shadow-xl">
+					<div class="card-body">
+						<h2 class="card-title">Claims</h2>
+						<div class="overflow-x-auto">
+							<table class="table table-zebra">
+								<thead>
+									<tr>
+										<th>Type</th>
+										<th>Value</th>
+									</tr>
+								</thead>
+								<tbody>
+									@foreach (var claim in claims)
+									{
+										<tr>
+											<td class="font-mono text-xs">@claim.Type</td>
+											<td class="font-mono text-xs">@claim.Value</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			}
+
+			@if (currentUser != null)
+			{
+				<div class="card bg-base-100 shadow-xl">
+					<div class="card-body">
+						<h2 class="card-title text-success">✅ Current User Profile</h2>
+						<div class="overflow-x-auto">
+							<table class="table table-zebra">
+								<tbody>
+									<tr>
+										<td class="font-bold">ID</td>
+										<td class="font-mono text-xs">@currentUser.Id</td>
+									</tr>
+									<tr>
+										<td class="font-bold">Email</td>
+										<td>@currentUser.Email</td>
+									</tr>
+									<tr>
+										<td class="font-bold">Username</td>
+										<td>@currentUser.Username</td>
+									</tr>
+									<tr>
+										<td class="font-bold">Display Name</td>
+										<td>@currentUser.DisplayName</td>
+									</tr>
+									<tr>
+										<td class="font-bold">Global Role</td>
+										<td>
+											<span class="badge badge-info">@currentUser.GlobalRole</span>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			}
+			else if (isAuthenticated)
+			{
+				<div class="alert alert-warning">
+					<span>⚠️ User is authenticated but profile not loaded!</span>
+				</div>
+			}
+		</div>
+	}
+
+	<div class="card bg-base-200 mt-6">
+		<div class="card-body">
+			<h3 class="card-title">Instructions</h3>
+			<ol class="list-decimal list-inside space-y-2">
+				<li>Login to your account</li>
+				<li>Come to this page</li>
+				<li>You should see "Is Authenticated: Yes"</li>
+				<li>You should see your claims (email, name, role)</li>
+				<li>You should see your user profile</li>
+			</ol>
+		</div>
+	</div>
+</div>
+
+@code {
+	private bool isLoading = true;
+	private bool isAuthenticated = false;
+	private string? identityName;
+	private string? authenticationType;
+	private List<Claim> claims = new();
+	private TManager.Web.Shared.Models.UserProfile? currentUser;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await RefreshState();
+	}
+
+	private async Task RefreshState()
+	{
+		isLoading = true;
+		claims.Clear();
+
+		try
+		{
+			var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+			var user = authState.User;
+
+			isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+			identityName = user.Identity?.Name;
+			authenticationType = user.Identity?.AuthenticationType;
+
+			if (isAuthenticated)
+			{
+				claims = user.Claims.ToList();
+				currentUser = await AuthService.GetCurrentUserAsync();
+
+				Console.WriteLine($"[TestAuthState] Authenticated: {isAuthenticated}");
+				Console.WriteLine($"[TestAuthState] Identity Name: {identityName}");
+				Console.WriteLine($"[TestAuthState] Claims count: {claims.Count}");
+				Console.WriteLine($"[TestAuthState] Current User: {currentUser?.Email}");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"[TestAuthState] Error: {ex.Message}");
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+}

@@ -11,84 +11,72 @@
 
 <PageTitle>Login - TournamentApp</PageTitle>
 
-<!-- Page Layout -->
 <div class="min-h-screen flex items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full">
-
         <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
-
-                <!-- Header -->
+                
+                @* Header *@
                 <div class="text-center mb-6">
                     <h1 class="text-3xl font-bold">Welcome Back! 👋</h1>
                     <p class="text-base-content/70 mt-2">Sign in to your account</p>
                 </div>
 
-                <!-- Login Form -->
+                @* Login Form *@
                 <EditForm Model="@command" OnValidSubmit="HandleLogin" FormName="loginForm">
                     <DataAnnotationsValidator />
 
-                    <!-- Error Message -->
+                    @* Error Message *@
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
                         <div class="alert alert-error mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 class="stroke-current shrink-0 h-6 w-6"
-                                 fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2
-                                             m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>@errorMessage</span>
                         </div>
                     }
 
-                    <!-- Success Message -->
-                    @if (!string.IsNullOrEmpty(successMessage))
+                    @* Success Message *@
+                    @if (successMessage != null)
                     {
                         <div class="alert alert-success mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 class="stroke-current shrink-0 h-6 w-6"
-                                 fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M9 12l2 2 4-4m6 2a9 9 0
-                                             11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>@successMessage</span>
                         </div>
                     }
 
-                    <!-- Email Field -->
+                    @* Email Field *@
                     <div class="form-control mb-4">
                         <label class="label">
                             <span class="label-text font-semibold">Email Address</span>
                         </label>
-
-                        <InputText @bind-Value="command.Email"
-                                   class="input input-bordered w-full"
-                                   placeholder="you@example.com"
-                                   type="email"
-                                   autocomplete="email" />
-
+                        <InputText 
+                            @bind-Value="command.Email" 
+                            class="input input-bordered w-full" 
+                            placeholder="you@example.com"
+                            type="email"
+                            autocomplete="email" />
                         <ValidationMessage For="@(() => command.Email)" class="label-text-alt text-error mt-1" />
                     </div>
 
-                    <!-- Password Field -->
+                    @* Password Field *@
                     <div class="form-control mb-4">
                         <label class="label">
                             <span class="label-text font-semibold">Password</span>
                         </label>
-
-                        <InputText @bind-Value="command.Password"
-                                   class="input input-bordered w-full"
-                                   placeholder="••••••••"
-                                   type="password"
-                                   autocomplete="current-password" />
-
+                        <InputText 
+                            @bind-Value="command.Password" 
+                            class="input input-bordered w-full" 
+                            placeholder="••••••••"
+                            type="password"
+                            autocomplete="current-password" />
                         <ValidationMessage For="@(() => command.Password)" class="label-text-alt text-error mt-1" />
                     </div>
 
-                    <!-- Remember Me -->
+                    @* Remember Me *@
                     <div class="form-control mb-6">
                         <label class="label cursor-pointer justify-start gap-3">
                             <InputCheckbox @bind-Value="command.RememberMe" class="checkbox checkbox-primary" />
@@ -96,7 +84,7 @@
                         </label>
                     </div>
 
-                    <!-- Submit Button -->
+                    @* Submit Button *@
                     <div class="form-control">
                         <button type="submit" class="btn btn-primary btn-block" disabled="@isSubmitting">
                             @if (isSubmitting)
@@ -112,10 +100,10 @@
                     </div>
                 </EditForm>
 
-                <!-- Divider -->
+                @* Divider *@
                 <div class="divider">OR</div>
 
-                <!-- Sign Up Link -->
+                @* Sign Up Link *@
                 <div class="text-center">
                     <p class="text-sm text-base-content/70">
                         Don't have an account?
@@ -125,7 +113,7 @@
             </div>
         </div>
 
-        <!-- Forgot Password Link -->
+        @* Forgot Password Link *@
         <div class="text-center mt-6 text-sm text-base-content/60">
             <a href="/forgot-password" class="link link-hover">Forgot your password?</a>
         </div>
@@ -136,14 +124,10 @@
     [SupplyParameterFromForm]
     private LoginCommand command { get; set; } = new();
 
-    private bool isSubmitting;
+    private bool isSubmitting = false;
     private string? errorMessage;
     private string? successMessage;
 
-    /// <summary>
-    /// Handles user login flow.
-    /// Displays feedback and redirects upon success.
-    /// </summary>
     private async Task HandleLogin()
     {
         isSubmitting = true;
@@ -156,25 +140,35 @@
 
             if (result.Success && result.User != null)
             {
+                Console.WriteLine($"[Login] Login successful for: {result.User.Email}");
+                
                 // Mark user as authenticated
                 AuthStateProvider.MarkUserAsAuthenticated(result.User);
-
+                
+                Console.WriteLine("[Login] Auth state updated, showing success message");
                 successMessage = "Login successful! Redirecting...";
-
-                // Wait a moment to show success message
+                
+                // Force UI update
+                StateHasChanged();
+                
+                // Wait to show success message
                 await Task.Delay(1000);
-
-                // Redirect to home page with force reload to update auth state
+                
+                Console.WriteLine("[Login] Redirecting to home");
+                
+                // Redirect with force reload to ensure nav menu updates
                 Navigation.NavigateTo("/", forceLoad: true);
             }
             else
             {
                 errorMessage = result.ErrorMessage ?? "Invalid email or password.";
+                Console.WriteLine($"[Login] Login failed: {errorMessage}");
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"An unexpected error occurred: {ex.Message}";
+            Console.WriteLine($"[Login] Exception: {ex.Message}");
         }
         finally
         {
