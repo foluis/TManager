@@ -1,12 +1,14 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using TManager.Web.Features.Auth.Services
+@using TManager.Web.Components.Shared
 
-@inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IAuthService AuthService
+@inject NavigationManager Navigation
 
 @implements IDisposable
+
 
 <div class="navbar bg-base-100 shadow-lg">
     <div class="navbar-start">
@@ -14,12 +16,12 @@
             <span class="text-primary">🏆</span> TournamentApp
         </a>
     </div>
-
+    
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
             <li><a href="/" class="btn btn-ghost">Home</a></li>
             <li><a href="/tournaments" class="btn btn-ghost">Tournaments</a></li>
-
+            
             @if (isAuthenticated)
             {
                 @if (isOrganizer || isAdmin)
@@ -33,7 +35,7 @@
                     <li><a href="/all-tournaments" class="btn btn-ghost">All Tournaments</a></li>
                 }
             }
-
+            
             <li>
                 <details>
                     <summary class="btn btn-ghost text-info">🔧 Dev Tools</summary>
@@ -47,10 +49,13 @@
             </li>
         </ul>
     </div>
-
+    
     <div class="navbar-end">
         @* Desktop menu *@
         <div class="hidden lg:flex items-center gap-2">
+            @* Theme Toggle - Always visible *@
+            <ThemeToggle />
+            
             @if (isAuthenticated)
             {
                 @* User is logged in - show profile dropdown *@
@@ -87,18 +92,23 @@
                 <a href="/login" class="btn btn-primary">Login</a>
             }
         </div>
-
+        
         @* Mobile hamburger menu *@
-        <div class="dropdown dropdown-end lg:hidden">
-            <label tabindex="0" class="btn btn-ghost">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </label>
+        <div class="lg:hidden flex items-center gap-2">
+            @* Theme Toggle - Always visible *@
+            <ThemeToggle />
+            
+            @* Hamburger button *@
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-ghost">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </label>
             <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
                 <li><a href="/">Home</a></li>
                 <li><a href="/tournaments">Tournaments</a></li>
-
+                
                 @if (isAuthenticated)
                 {
                     @if (isOrganizer || isAdmin)
@@ -111,7 +121,7 @@
                         <li><a href="/users-management">Users Management</a></li>
                         <li><a href="/all-tournaments">All Tournaments</a></li>
                     }
-
+                    
                     <li class="menu-title mt-2">
                         <span>Signed in as</span>
                     </li>
@@ -121,7 +131,7 @@
                     <li><a href="/profile">My Profile</a></li>
                     <li><a href="/settings">Settings</a></li>
                 }
-
+                
                 <li class="menu-title">
                     <span class="text-info">🔧 Dev Tools</span>
                 </li>
@@ -129,7 +139,7 @@
                 <li><a href="/test-database">Database Test</a></li>
                 <li><a href="/test-profile-query">Profile Query Test</a></li>
                 <li><a href="/test-auth-state">Auth State Test</a></li>
-
+                
                 @if (isAuthenticated)
                 {
                     <li class="border-t mt-2 pt-2">
@@ -149,6 +159,7 @@
         </div>
     </div>
 </div>
+</div>
 
 @code {
     private bool isAuthenticated = false;
@@ -161,7 +172,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadUserInfo();
-
+        
         // Subscribe to auth state changes
         if (AuthStateProvider is CustomAuthStateProvider customProvider)
         {
@@ -191,9 +202,9 @@
                 userName = user.FindFirst(c => c.Type == "Username")?.Value ?? user.Identity.Name ?? "User";
                 userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
                 userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
-
+                
                 Console.WriteLine($"[NavMenu] User: {userName}, Email: {userEmail}, Role: {userRole}");
-
+                
                 isOrganizer = userRole == TManager.Web.Shared.Models.UserRole.Organizer;
                 isAdmin = userRole == TManager.Web.Shared.Models.UserRole.Admin;
             }
@@ -232,7 +243,7 @@
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2)
             return $"{parts[0][0]}{parts[1][0]}".ToUpper();
-
+        
         return userName[0].ToString().ToUpper();
     }
 
@@ -243,7 +254,7 @@
         _ => "badge-info"
     };
 
-    private string GetRoleDisplayName() =>
+    private string GetRoleDisplayName() => 
         TManager.Web.Shared.Models.UserRole.GetDisplayName(userRole ?? "");
 
     public void Dispose()
